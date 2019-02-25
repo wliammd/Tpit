@@ -1,0 +1,26 @@
+---
+title: "TpitReport"
+author: "W. McDonald"
+date: "2/24/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(tidyverse)
+patma <- read_csv("PATMA8.csv")
+patma %>% 
+  count(Dx, sort = TRUE)
+
+
+```
+
+```{r}
+
+```
+
