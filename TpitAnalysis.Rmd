@@ -15,20 +15,25 @@ The goal of this document is to reproducibly import, wrangle and analyse the ful
 
 This analysis will rely on the tools of the tidyverse, when possible. 
 
-## Data import, cleaning, and wrangling.
+## Data import, wrangling.
 
 ```{r}
 library(tidyverse)
-patma <- read_csv("PATMA8.csv")
-patma %>% 
-  count(Dx, sort = TRUE)
-
-str(patma)
-nlevels(patma$Dx)
-
+patma <- read_csv("")
 
 
 ```
+
+## IHC by diagnosis box plots, scatter plots
+
+A basic understanding of the staining patterns is an important first step. 
+
+This should be followed by modification of the Dx variable (mutate()?) to adjust for Tpit staining--which is more sensitive and specific for corticotroph differentiation than other IHC. This should be born in mind and well-documented. 
+
+```{r}
+
+```
+
 
 ## Correlation matrix and p values for the correlations
 
@@ -64,9 +69,4 @@ nlevels(patma$Dx)
 
 ```
 
-## IHC by diagnosis box plots, scatter plots
-
-```{r}
-
-```
 
