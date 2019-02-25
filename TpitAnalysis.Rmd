@@ -9,7 +9,13 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Goal
+
+The goal of this document is to reproducibly import, wrangle and analyse the full pituitary adenoma tissue microarray dataset, including all immunostains up to *Tpit*. *CAM5.2* staining pattern is included, as a relavant categorical variable. Otherwise, IHC staining extant and intensity are reported as Allred scores as previously published. 
+
+This analysis will rely on the tools of the tidyverse, when possible. 
+
+## Data import, cleaning, and wrangling.
 
 ```{r}
 library(tidyverse)
@@ -17,8 +23,48 @@ patma <- read_csv("PATMA8.csv")
 patma %>% 
   count(Dx, sort = TRUE)
 
+str(patma)
+nlevels(patma$Dx)
+
+
 
 ```
+
+## Correlation matrix and p values for the correlations
+
+```{r}
+
+```
+
+## HIERARCHICAL CLUSTERING
+
+```{r}
+
+```
+
+## K-means cluster analysis and display using clusplot()
+
+```{r}
+
+```
+
+## PRINCIPLE COMPONENT ANALYSIS (PCA)
+```{r}
+
+```
+
+## FACTOR ANALYSIS
+```{r}
+
+```
+
+## Classification trees
+
+```{r}
+
+```
+
+## IHC by diagnosis box plots, scatter plots
 
 ```{r}
 
