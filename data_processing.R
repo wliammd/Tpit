@@ -11,3 +11,6 @@ TpitAdded <- patma %>%
 
 TpitAdded %>%
   count(newDx, sort = TRUE)
+
+TpitAdded %>%
+  write_csv(path = "data/TpitAddedDx")
