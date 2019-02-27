@@ -19,18 +19,37 @@ This analysis will rely on the tools of the tidyverse, when possible.
 
 ```{r}
 library(tidyverse)
-patma <- read_csv("")
+patma <- read_csv("data/TpitAddedDx")
 
+patma %>%
+  count(newDx, sort = TRUE)
 
+patma %>%
+  group_by(newDx) %>%
+  summarize(mean(TSHMedian, na.rm = TRUE))
 ```
 
 ## IHC by diagnosis box plots, scatter plots
 
 A basic understanding of the staining patterns is an important first step. 
 
-This should be followed by modification of the Dx variable (mutate()?) to adjust for Tpit staining--which is more sensitive and specific for corticotroph differentiation than other IHC. This should be born in mind and well-documented. 
-
 ```{r}
+g<-ggplot(patma, aes(newDx, TPITMedian))
+g + geom_point(position=position_jitter(width=0.3, height=0.1)) +
+  theme_minimal() +
+  coord_flip() +
+  labs(x="Diagnostic Class") +
+  labs(y="Allred Score") +
+  labs(title="Tpit Median IHC Score")
+
+t<-ggplot(patma, aes(newDx, TSHMedian))
+t + geom_point(position=position_jitter(width=0.3, height=0.1)) +
+  theme_minimal() +
+  coord_flip() +
+  labs(x="Diagnostic Class") +
+  labs(y="Allred Score") +
+  labs(title="TSH Median IHC Score")
+
 
 ```
 
