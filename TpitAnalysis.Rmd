@@ -19,6 +19,8 @@ This analysis will rely on the tools of the tidyverse, when possible.
 
 ```{r}
 library(tidyverse)
+library(gridExtra)
+
 patma <- read_csv("data/TpitAddedDx")
 
 patma %>%
@@ -33,22 +35,34 @@ patma %>%
 
 A basic understanding of the staining patterns is an important first step. 
 
+Multiple ways to display these in a grid. The gridExtra package is pretty simple. See https://cran.r-project.org/web/packages/egg/vignettes/Ecosystem.html for a useful vignette.
+
 ```{r}
-g<-ggplot(patma, aes(newDx, TPITMedian))
-g + geom_point(position=position_jitter(width=0.3, height=0.1)) +
+p<-ggplot(patma, aes(newDx, TPITMedian))
+p1 <- p + geom_point(position=position_jitter(width=0.3, height=0.1)) +
   theme_minimal() +
   coord_flip() +
   labs(x="Diagnostic Class") +
   labs(y="Allred Score") +
   labs(title="Tpit Median IHC Score")
 
-t<-ggplot(patma, aes(newDx, TSHMedian))
-t + geom_point(position=position_jitter(width=0.3, height=0.1)) +
+p<-ggplot(patma, aes(newDx, SF1Median))
+p2 <- p + geom_point(position=position_jitter(width=0.3, height=0.1)) +
   theme_minimal() +
   coord_flip() +
   labs(x="Diagnostic Class") +
   labs(y="Allred Score") +
-  labs(title="TSH Median IHC Score")
+  labs(title="SF-1 Median IHC Score")
+
+p<-ggplot(patma, aes(newDx, Pit1Median))
+p3 <- p + geom_point(position=position_jitter(width=0.3, height=0.1)) +
+  theme_minimal() +
+  coord_flip() +
+  labs(x="Diagnostic Class") +
+  labs(y="Allred Score") +
+  labs(title="Pit-1 Median IHC Score")
+
+grid.arrange(p1, p2, p3, nrow = 1)
 
 
 ```
