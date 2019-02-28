@@ -64,13 +64,27 @@ p3 <- p + geom_point(position=position_jitter(width=0.3, height=0.1)) +
 
 grid.arrange(p1, p2, p3, nrow = 1)
 
-
 ```
 
 
 ## Correlation matrix and p values for the correlations
 
+Beyond the R help documentation for cor(), I like the visualizations from http://www.sthda.com/english/wiki/visualize-correlation-matrix-using-correlogram
+
+Explore these!
+
 ```{r}
+library(corrplot)
+patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>% 
+  cor(y = NULL, use = "complete.obs", method = "pearson") %>% 
+  round(2)
+
+M <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median) %>% 
+  cor(y = NULL, use = "complete.obs", method = "pearson")
+
+corrplot(M, type = "upper", order = "hclust", title = "Correlation Plot")
 
 ```
 
