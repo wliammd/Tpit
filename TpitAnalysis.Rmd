@@ -35,7 +35,7 @@ patma %>%
 
 A basic understanding of the staining patterns is an important first step. 
 
-Multiple ways to display these in a grid. The gridExtra package is pretty simple. See https://cran.r-project.org/web/packages/egg/vignettes/Ecosystem.html for a useful vignette.
+Multiple ways to display these in a grid. The gridExtra package is pretty simple. See [this useful vignette](https://cran.r-project.org/web/packages/egg/vignettes/Ecosystem.html).
 
 ```{r}
 p<-ggplot(patma, aes(newDx, TPITMedian))
@@ -69,7 +69,7 @@ grid.arrange(p1, p2, p3, nrow = 1)
 
 ## Correlation matrix and p values for the correlations
 
-Beyond the R help documentation for cor(), I like the visualizations from http://www.sthda.com/english/wiki/visualize-correlation-matrix-using-correlogram
+Beyond the R help documentation for cor(), I like the visualizations from [this site](http://www.sthda.com/english/wiki/visualize-correlation-matrix-using-correlogram)
 
 Explore these!
 
@@ -84,7 +84,17 @@ M <- patma %>%
   select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median) %>% 
   cor(y = NULL, use = "complete.obs", method = "pearson")
 
-corrplot(M, type = "upper", order = "hclust", title = "Correlation Plot")
+corrplot(M, type = "upper", order = "hclust")
+
+library(Hmisc)
+
+pvalues <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median) %>% 
+  cor(y = NULL, use = "complete.obs", method = "pearson") %>%
+  as.matrix() %>%
+  rcorr()
+
+pvalues
 
 ```
 
