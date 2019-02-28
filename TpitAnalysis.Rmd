@@ -19,16 +19,18 @@ This analysis will rely on the tools of the tidyverse, when possible.
 
 ```{r}
 library(tidyverse)
-library(gridExtra)
 
 patma <- read_csv("data/TpitAddedDx")
 
 patma %>%
   count(newDx, sort = TRUE)
 
-patma %>%
+tsh <- patma %>%
   group_by(newDx) %>%
-  summarize(mean(TSHMedian, na.rm = TRUE))
+  summarize(mean(TSHMedian, na.rm = TRUE)) 
+
+tsh
+
 ```
 
 ## IHC by diagnosis box plots, scatter plots
@@ -38,6 +40,7 @@ A basic understanding of the staining patterns is an important first step.
 Multiple ways to display these in a grid. The gridExtra package is pretty simple. See [this useful vignette](https://cran.r-project.org/web/packages/egg/vignettes/Ecosystem.html).
 
 ```{r}
+library(gridExtra)
 p<-ggplot(patma, aes(newDx, TPITMedian))
 p1 <- p + geom_point(position=position_jitter(width=0.3, height=0.1)) +
   theme_minimal() +
@@ -69,9 +72,9 @@ grid.arrange(p1, p2, p3, nrow = 1)
 
 ## Correlation matrix and p values for the correlations
 
-Beyond the R help documentation for cor(), I like the visualizations from [this site](http://www.sthda.com/english/wiki/visualize-correlation-matrix-using-correlogram)
+Beyond the R help documentation for cor(), I like the visualizations from [this site that uses corrplot](http://www.sthda.com/english/wiki/visualize-correlation-matrix-using-correlogram)
 
-Explore these!
+The package Hmisc is used to generate p-values for the correlation matrix.
 
 ```{r}
 library(corrplot)
@@ -100,7 +103,23 @@ pvalues
 
 ## HIERARCHICAL CLUSTERING
 
+Note that the hierarchical clustering profits from name transparency when producing the final plot. The first bits of code make an object that has lost newDx and CaseID in favor of a row name that bears a combination of the two. 
+
 ```{r}
+rowsAssigned <- patma %>%
+  unite("RowNames", c("CaseID", "newDx")) %>%
+  column_to_rownames(var = "RowNames")
+
+df <- rowsAssigned %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median) %>%
+  na.omit()
+
+d <- dist(df, method = "euclidean")
+
+hc1 <- hclust(d, method = "complete")
+
+plot(hc1, cex = 0.6, hang = -1)
+
 
 ```
 
