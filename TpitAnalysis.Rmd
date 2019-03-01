@@ -101,7 +101,7 @@ pvalues
 
 ```
 
-## HIERARCHICAL CLUSTERING
+## Hierarchical clustering
 
 Note that the hierarchical clustering profits from name transparency when producing the final plot. The first bits of code make an object that has lost newDx and CaseID in favor of a row name that bears a combination of the two. 
 
@@ -125,16 +125,37 @@ plot(hc1, cex = 0.6, hang = -1)
 
 ## K-means cluster analysis and display using clusplot()
 
+Two things are recommended when performing K-means clustering: assign a large nstart and using the setseed() function
+
 ```{r}
+set.seed(2019)
+km6 <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
+  na.omit() %>% 
+  kmeans(6,nstart=20)
+
+km6
+km.g6 <- km6$cluster
+km.g6
 
 ```
 
-## PRINCIPLE COMPONENT ANALYSIS (PCA)
-```{r}
+## Principle component analysis (PCA)
 
+```{r}
+pc <- km6 <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
+  na.omit() %>% 
+  prcomp(center = TRUE, scale = TRUE)
+
+summary(pc) # these list the principle components in decending explanatory ability. See proporation of overall variance.
+plot(pc) # how many components do you want to include? No set answer
+pc # rotation section lets us know the relationship between IHC and principle components
+predict(pc)
+biplot(pc) # VERY interesting in its ability to distinguish between the Pit1, SF1 and Tpit groups
 ```
 
-## FACTOR ANALYSIS
+## Factor analysis
 ```{r}
 
 ```
