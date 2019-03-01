@@ -33,7 +33,7 @@ tsh
 
 ```
 
-## IHC by diagnosis box plots, scatter plots
+## IHC by diagnosis scatter plots
 
 A basic understanding of the staining patterns is an important first step. 
 
