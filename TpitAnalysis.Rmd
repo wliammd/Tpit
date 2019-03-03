@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Goal
 
-The goal of this document is to reproducibly import, wrangle and analyse the full pituitary adenoma tissue microarray dataset, including all immunostains up to *Tpit*. *CAM5.2* staining pattern is included, as a relavant categorical variable. Otherwise, IHC staining extant and intensity are reported as Allred scores as previously published. 
+The goal of this document is to reproducibly import, wrangle and analyse the full pituitary adenoma tissue microarray dataset, including all immunostains up to *Tpit*. *CAM5.2* staining pattern is included, as a relevant categorical variable. Otherwise, IHC staining extant and intensity are reported as Allred scores as previously published. 
 
 This analysis will rely on the tools of the tidyverse, when possible. 
 
@@ -142,6 +142,9 @@ km.g6
 
 ## Principle component analysis (PCA)
 
+Work in progress: check out [this site for some good techniques](http://huboqiang.cn/2016/03/03/RscatterPlotPCA).
+
+
 ```{r}
 pc <- km6 <- patma %>% 
   select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
@@ -153,6 +156,18 @@ plot(pc) # how many components do you want to include? No set answer
 pc # rotation section lets us know the relationship between IHC and principle components
 predict(pc)
 biplot(pc) # VERY interesting in its ability to distinguish between the Pit1, SF1 and Tpit groups
+
+library(ggfortify)
+df <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
+  na.omit()
+
+trimmedSet <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, newDx) %>%
+  na.omit()
+
+autoplot(prcomp(df), data = trimmedSet, colour = 'newDx', size = 10)
+
 ```
 
 ## Factor analysis
