@@ -146,6 +146,8 @@ Work in progress: check out [this site for some good techniques](http://huboqian
 
 See also [this page](https://community.rstudio.com/t/tidyverse-solutions-for-factor-analysis-principal-component-analysis/4504).
 
+PCA using tidyverse tools requires a little different method. See [this work](https://tbradley1013.github.io/2018/02/01/pca-in-a-tidy-verse-framework/) by Tyler Bradley. 
+
 ```{r}
 pc <- km6 <- patma %>% 
   select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
@@ -167,16 +169,29 @@ trimmedSet <- patma %>%
   select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, newDx) %>%
   na.omit()
 
-autoplot(prcomp(df), data = trimmedSet, colour = 'newDx', size = 10)
+autoplot(prcomp(df), data = trimmedSet, colour = 'newDx', size = 8)
 
 ```
 
-## T-SNE analysis
+## T-SNE (t-Distributed Stochastic Neighbor Embedding) analysis
 
 This is an interesting method that is usually compared with PCA plots. See [this page](https://stackoverflow.com/questions/44837536/how-to-use-ggplot-to-plot-t-sne-clustering).
 
 ```{r}
+library(Rtsne)
+patma_unique <- patma %>% 
+  na.omit() %>% 
+  unique()
+patma_matrix <- as.matrix(patma_unique[,c(4:12, 18, 23, 24)])
+set.seed(2019)
+tsne_out <- Rtsne(patma_matrix, check_duplicates = FALSE, theta = 0.0) 
 
+library(ggplot2)
+tsne_plot <- data.frame(x = tsne_out$Y[,1], y = tsne_out$Y[,2], Diagnoses = patma_unique$newDx)
+
+ggplot(tsne_plot) + 
+  geom_point(aes(x=x, y=y, color=Diagnoses), size = 5) +
+  theme_minimal()
 ```
 
 ## Factor analysis
