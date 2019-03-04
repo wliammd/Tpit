@@ -17,7 +17,7 @@ This analysis will rely on the tools of the tidyverse, when possible.
 
 ## Data import, wrangling.
 
-```{r}
+```{r echo=TRUE}
 library(tidyverse)
 
 patma <- read_csv("data/TpitAddedDx")
@@ -144,6 +144,7 @@ km.g6
 
 Work in progress: check out [this site for some good techniques](http://huboqiang.cn/2016/03/03/RscatterPlotPCA).
 
+See also [this page](https://community.rstudio.com/t/tidyverse-solutions-for-factor-analysis-principal-component-analysis/4504).
 
 ```{r}
 pc <- km6 <- patma %>% 
@@ -171,11 +172,15 @@ autoplot(prcomp(df), data = trimmedSet, colour = 'newDx', size = 10)
 ```
 
 ## Factor analysis
+
+
 ```{r}
 
 ```
 
 ## Classification trees
+
+This [webpage](http://www.sthda.com/english/articles/35-statistical-machine-learning-essentials/141-cart-model-decision-tree-essentials/) has a nice discussion of CART analyses in tidyverse terms. 
 
 ```{r}
 
