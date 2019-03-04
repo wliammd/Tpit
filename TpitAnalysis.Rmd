@@ -171,6 +171,14 @@ autoplot(prcomp(df), data = trimmedSet, colour = 'newDx', size = 10)
 
 ```
 
+## T-SNE analysis
+
+This is an interesting method that is usually compared with PCA plots. See [this page](https://stackoverflow.com/questions/44837536/how-to-use-ggplot-to-plot-t-sne-clustering).
+
+```{r}
+
+```
+
 ## Factor analysis
 
 
