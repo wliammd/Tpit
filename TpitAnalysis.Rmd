@@ -129,14 +129,18 @@ Two things are recommended when performing K-means clustering: assign a large ns
 
 ```{r}
 set.seed(2019)
-km6 <- patma %>% 
+rowsAssigned <- patma %>%
+  unite("RowNames", c("CaseID", "newDx")) %>%
+  column_to_rownames(var = "RowNames")
+
+km6 <- rowsAssigned %>% 
   select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
   na.omit() %>% 
   kmeans(6,nstart=20)
 
 km6
 km.g6 <- km6$cluster
-km.g6
+km.g6 %>% sort()
 
 ```
 
@@ -149,7 +153,7 @@ See also [this page](https://community.rstudio.com/t/tidyverse-solutions-for-fac
 PCA using tidyverse tools requires a little different method. See [this work](https://tbradley1013.github.io/2018/02/01/pca-in-a-tidy-verse-framework/) by Tyler Bradley. 
 
 ```{r}
-pc <- km6 <- patma %>% 
+pc <- patma %>% 
   select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
   na.omit() %>% 
   prcomp(center = TRUE, scale = TRUE)
