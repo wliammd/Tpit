@@ -220,6 +220,8 @@ autoplot(prcomp(df), data = trimmedSet, colour = 'newDx', size = 8)
 
 This is an interesting method that is usually compared with PCA plots. See [this page](https://stackoverflow.com/questions/44837536/how-to-use-ggplot-to-plot-t-sne-clustering).
 
+DataCamp has a tutorial for python that describes T-SNE at [this page](https://www.datacamp.com/community/tutorials/introduction-t-sne).
+
 ```{r}
 library(Rtsne)
 patma_unique <- patma %>% 
@@ -236,6 +238,7 @@ ggplot(tsne_plot) +
   geom_point(aes(x=x, y=y, color=Diagnoses), size = 5) +
   theme_minimal()
 ```
+
 ## K nearest neighbors supervised learning
 
 This [R-blogger post](https://www.r-bloggers.com/k-nearest-neighbor-step-by-step-tutorial/) by Deepanshu Bhalla is a pretty clean introduction to KNN, and does a nice job distinguishing it from K-means analysis, which is often confused with it. [This demo](http://rpubs.com/Nitika/kNN_Iris) also has some nice advice.
