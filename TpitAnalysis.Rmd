@@ -22,8 +22,15 @@ library(tidyverse)
 
 patma <- read_csv("data/TpitAddedDx")
 
-patma %>%
+newClass <- patma %>%
   count(newDx, sort = TRUE)
+newClass
+sum(newClass$n)
+
+oldClass <- patma %>% 
+  count(Dx, sort = TRUE)
+oldClass
+sum(oldClass$n)
 
 tsh <- patma %>%
   group_by(newDx) %>%
