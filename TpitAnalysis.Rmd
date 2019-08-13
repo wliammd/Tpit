@@ -1,7 +1,7 @@
 ---
 title: "TpitReport"
 author: "W. McDonald"
-date: "2/24/2019"
+date: "`r Sys.Date()`"
 output: html_document
 ---
 
@@ -278,15 +278,15 @@ plot(model)
 text(model, digits = 3)
 ```
 
-# The Foundation of Practical Pituitary Adenoma Diagnosis: The Role of Tpit Immunohistochemistry
+# The Classification Problem in Pituitary Adenoma: The Role of Tpit Immunohistochemistry
 
-Pituitary adenoma classification suffers from a variety of problems. Initially developed with electron microscopy in mind, the World Health Organization classification retains many of the vestiges of those early studies and their problems: reliance on small numbers of experts sampling miniscule portions of variably sampled tumors, with the most important series apparently jumping primary literature for publication in textbooks. 
+Pituitary adenoma classification suffers from a variety of problems. Initially developed with electron microscopy in mind, the World Health Organization classification retains many of the vestiges of those early studies and their problems: small numbers, small samples, with the most important series apparently jumping primary literature for publication in textbooks.
 
 The effect was to establish a classification that has been difficult to refine, even  with the advent of new IHC for transcription factors. Substantive arguments about prevalence and classification are avoided in favor of unimportant nomenclature changes (pituitary neuroendocrine tumor or PitNET is neither more brief nor more useful than its precursor, but it enjoys the praise of endocrine pathologists, and it sounds clever. Cleverness notwithstanding, it fails to clarify the fundamental problem of classification. 
 
 We published a series of 136 PitNETs in 2017 in an attempt to improve the situation. At the time, reagents suitable for formalin-fixed, paraffin-embedded material were available for only Steroidogenic Factor 1 and Pit-1. Nonetheless, we were able to show great improvements, both in terms of diagnostic efficiency and diagnostic accuracy, with the use of these stains, and related a simple algorithm that was sufficient to diagnose most PitNETs with three IHC stains. 
 
-Pituitary adenomas can be classified in three broad families based on their resemblance to developmental pathways of the anterior pituitary (1). While immunohistochemical stains for the six anterior pituitary hormones (prolactin, growth hormone, thyroid stimulating hormone, luteinizing hormone, follicle stimulating hormone and adrenocorticotropin (ACTH)) are widely used, some of these suffer from suboptimal sensitivity and specificity. ACTH immunoreactivity in particular is widely regarded as lacking in sensitivity and specificity. This is problematic, since ACTH-producing macroadenomas are considered more aggressive(2), and the resection of hormonally active ACTH-producing tumors can cause life-threatening cortisol insufficiency if left untreated. That is, both over- and under-detection of ACTH-producing tumors can have clinical consequences. 
+Pituitary adenomas can be classified in three broad families based on their resemblance to developmental pathways of the anterior pituitary (1). While immunohistochemical stains for the six anterior pituitary hormones (prolactin, growth hormone, thyroid stimulating hormone, luteinizing hormone, follicle stimulating hormone and adrenocorticotropin (ACTH)) are widely used, some of these suffer from suboptimal sensitivity and specificity. ACTH immunoreactivity in particular is widely regarded as lacking in sensitivity and specificity. This is problematic, since ACTH-producing macroadenomas are considered more aggressive (2), and the resection of hormonally active ACTH-producing tumors can cause life-threatening cortisol insufficiency if left untreated. That is, both over- and under-detection of ACTH-producing tumors can have clinical consequences. 
 
 ACTH-producing adenomas account for approximately 17% of pituitary adenomas (3) . T-box transcription factor (T-Pit) mediates the corticotroph pathway (4, 5). Until recently, immunostains for T-Pit were restricted to frozen material, but the introduction of a polyclonal antibody to T-pit developed and validated according to standardized procedures within the Human Protein Atlas (http://www.proteinatlas.org) provides a reagent that reportedly overcomes this restriction. 
 
