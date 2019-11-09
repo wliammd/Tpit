@@ -1,0 +1,144 @@
+---
+title: "naiveBaysTpit"
+author: "W. McDonald (following Willems)"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Naive Bayes (NB) applied to Tpit project
+
+One helpful page that goes into some depth describing NB is <https://machinelearningmastery.com/better-naive-bayes/>. The DataCamp resources are also worth exploring. 
+
+```{r}
+library(tidyverse)
+library(naivebayes)
+```
+
+The first step is to bring in the data, as in other analyses.
+
+```{r}
+patma <- read_csv("data/TpitAddedVillaUpdate.csv")
+
+df <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median, finDx) 
+
+glimpse(df)
+```
+
+I don't know whether or not NB tolerate missing data. According to this paper <http://www.lbd.dcc.ufmg.br/colecoes/sbsi/2013/0066.pdf>, NB performed better than other models in accommodating missing data. Therefore, unlike in knn when I omitted cases with NA values, I will not do so in this analysis.
+
+NB needs binning of numeric data in order to produce categories that can be displayed in frequency tables. This can be accomplished in similar fashion to the *diagnostic rubric* that I made to better display the raw data. 
+
+```{r}
+df2  <-  df %>% 
+  mutate(SF1Median = ifelse(SF1Median > 4, "Pos", "Neg"),
+         Pit1Median = ifelse(Pit1Median > 4, "Pos", "Neg"),
+         TPITMedian = ifelse(TPITMedian > 4, "Pos", "Neg"),
+         PRLMedian = ifelse(PRLMedian > 4, "Pos", "Neg"),
+         GHMedian = ifelse(GHMedian > 4, "Pos", "Neg"),
+         TSHMedian = ifelse(TSHMedian > 4, "Pos", "Neg"),
+         GATA3Median = ifelse(GATA3Median > 4, "Pos", "Neg"),
+         LHMedian = ifelse(LHMedian > 4, "Pos", "Neg"),
+         FSHMedian = ifelse(FSHMedian > 4, "Pos", "Neg"),
+         ACTHMedian = ifelse(ACTHMedian > 4, "Pos", "Neg"),
+         ASUMedian = ifelse(ASUMedian > 4, "Pos", "Neg")) 
+
+glimpse(df2)
+```
+
+To use the model, we need a dataframe with a case that we find interesting, exemplary or problematic. One such problem is the set of four cases that 
+
+```{r}
+x <- data.frame("SF1Median" = "Neg", "Pit1Median" = "Neg", "TPITMedian" = "Pos", "PRLMedian" = "Neg", "GHMedian" = "Neg", "TSHMedian" = "Neg", "LHMedian" = "Neg", "FSHMedian" = "Neg", "ACTHMedian" = "Pos", "ASUMedian" = "Neg", "GATA3Median" = "Pos", stringsAsFactors = FALSE)
+x
+```
+
+Let's compare the probabilities generated to this strange case with those of a more straightforward and unrelated example:
+
+```{r}
+x1 <- data.frame("SF1Median" = "Neg", "Pit1Median" = "Pos", "TPITMedian" = "Neg", "PRLMedian" = "Pos", "GHMedian" = "Neg", "TSHMedian" = "Neg", "LHMedian" = "Neg", "FSHMedian" = "Neg", "ACTHMedian" = "Neg", "ASUMedian" = "Neg", "GATA3Median" = "Pos", stringsAsFactors = FALSE)
+x1
+```
+
+It's also important to understand how incomplete sets behave. 
+
+```{r}
+x2 <- data.frame("SF1Median" = "Pos", "Pit1Median" = "Neg", "TPITMedian" = "Neg", stringsAsFactors = FALSE)
+x2
+```
+
+Let's focus on df2, where I've generated only Pos and Neg categories. The question as to how many categories works best remains open. See the scrap work for more noodling.  
+
+```{r}
+model2 <- naive_bayes(finDx ~ SF1Median + Pit1Median + TPITMedian + PRLMedian + GHMedian + TSHMedian + LHMedian + FSHMedian + ACTHMedian + ASUMedian + GATA3Median, data = df2, laplace = 1)
+```
+
+Now see whether a difference in probabilities is perceptible:
+
+```{r}
+round(predict(model2, x, type = "prob"), 3)
+round(predict(model2, x1, type = "prob"), 3)
+round(predict(model2, x2, type = "prob"), 3)
+```
+
+Note that one should be able to get the class and probabilities in a single step with type = c("class","prob"). 
+
+```{r}
+knitr::knit_exit()
+```
+
+This is scrap work.
+
+## Since categorical data is the rule in NB, I should consider adding CAM5.2Pattern to the mix.
+
+This might augment corticotroph evaluation, for instance. 
+
+Compare probabilities between straightforward Tpit-positive, ACTH-positive cases and other permutations that are more complex. Cases 22, 28, 164, 173 have GATA3 strong (7 or 8) staining in addition to corticotroph features. How does this influence post-test probability? 
+
+Case 110 has Mid (6) SF1Median, but is otherwise an unremarkable silent corticotroph. How does this cases parameters perform in the model?
+
+## Another open question: can the class be "NA" for problematic cases? 
+
+## How many categories should be encoded?
+
+ifelse() gets me bimodal categories, but it will probably make more sense to bust things into Neg (0-2), Low (3-4), Mid (5-6), High (7-8) using a function of my own, perhaps.
+
+```{r}
+CatIHC <- function(x){
+  if (x < 3) {
+    y <- "Neg"
+  } else if (x <= 4) {
+    y <- "Low"
+  } else if (x <= 6) {
+    y <- "Mid"
+  } else if (x <= 8) {
+    y <- "High"
+  } else {
+    y <- "NA"
+  }
+  return(y)
+}
+
+df1 <- df
+df1[,1:11] <- df1 %>% 
+  select(-12) %>% 
+  mutate_each(funs(CatIHC))
+glimpse(df1)
+```
+
+With this assignation of categories performed, we can build the model:
+
+```{r}
+model <- naive_bayes(newDx ~ SF1Median + Pit1Median + TPITMedian + PRLMedian + GHMedian + TSHMedian + LHMedian + FSHMedian + ACTHMedian + ASUMedian + GATA3Median, data = df1, laplace = 1)
+```
+
+Now we can attempt to predict what our model would assign this. 
+
+```{r}
+predict(model, x, type = "prob")
+predict(model, x1, type = "prob")
+```

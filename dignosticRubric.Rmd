@@ -1,0 +1,142 @@
+---
+title: "diagnosticRubricNotes"
+author: "W. McDonald"
+date: "8/30/2019"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Show them how we make the diagnoses in tabular form
+
+```{r}
+library(tidyverse)
+library(knitr)
+
+patma <- read_csv("data/TpitAddedVillaUpdate.csv")
+
+IHC <- select(patma, SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, finDx)
+
+# Deciding on the number of variables to establish these diagnoses is of interest. If ACTH, LH, FSH are not helpful, they should be left out. Start with the basic set (including Pit-1 family member IHC) and see whether these will accurately distinguish groups. If not, add in IHC until they do. 
+
+IHC %>% 
+  count(finDx, sort = TRUE) 
+
+# The following line reorders the levels of newDx by frequency.
+
+IHC$newDx <- fct_infreq(IHC$finDx)
+
+orderedIHC <- IHC %>% 
+  arrange(finDx)
+
+orderedIHC %>% 
+  mutate(SF1Median = ifelse(SF1Median > 4, "+", "-"),
+         Pit1Median = ifelse(Pit1Median > 4, "+", "-"),
+         TPITMedian = ifelse(TPITMedian > 4, "+", "-"),
+         PRLMedian = ifelse(PRLMedian > 4, "+", "-"),
+         GHMedian = ifelse(GHMedian > 4, "+", "-"),
+         TSHMedian = ifelse(TSHMedian > 4, "+", "-")) %>% 
+  kable(align = "c")
+
+# I'm ignoring a more parsimonious bit of coding here in favor of transparency. Apologies. I should figure out a more elegant way to do this.           
+  
+```
+
+I'd like to compare the distributions of all the Allred scores by histogram in stacked figures. 
+
+A seemingly useful page appears at 
+<https://cran.r-project.org/web/packages/egg/vignettes/Ecosystem.html>
+
+```{r}
+library(gridExtra)
+p1 <- IHC %>% 
+  ggplot(aes(SF1Median)) + 
+  geom_histogram()
+
+p2 <- IHC %>% 
+  ggplot(aes(Pit1Median)) + 
+  geom_histogram()
+
+p3 <- IHC %>% 
+  ggplot(aes(TPITMedian)) +
+  geom_histogram()
+
+p4 <- IHC %>% 
+  ggplot(aes(GHMedian)) +
+  geom_histogram()
+
+p5 <- IHC %>% 
+  ggplot(aes(TSHMedian)) +
+  geom_histogram()
+
+grid.arrange(p1, p2, p3, p4, p5, nrow = 1)
+```
+
+It would still be useful to compare the table above with one containing all of the variables (SF-1, GATA3, Pit-1, Tpit, PRL, GH, TSH, LH, FSH, ACTH, CAM5.2)
+
+```{r}
+IHC2 <- select(patma, CaseID, SurgPathNo, SF1Median, GATA3Median, LHMedian, FSHMedian, Pit1Median, PRLMedian, GHMedian, TSHMedian, TPITMedian, ACTHMedian, CAM52Median, ERMedian, ASUMedian, finDx)
+
+glimpse(IHC2)
+
+# Order the factors based upon frequency, as before:
+
+IHC2$finDx <- fct_infreq(IHC2$finDx)
+
+orderedIHC2 <- IHC2 %>% 
+  arrange(finDx)
+
+orderedIHC2 %>% 
+  mutate(SF1Median = ifelse(SF1Median > 4, "+", "-"),
+         Pit1Median = ifelse(Pit1Median > 4, "+", "-"),
+         TPITMedian = ifelse(TPITMedian > 4, "+", "-"),
+         PRLMedian = ifelse(PRLMedian > 4, "+", "-"),
+         GHMedian = ifelse(GHMedian > 4, "+", "-"),
+         TSHMedian = ifelse(TSHMedian > 4, "+", "-"),
+         GATA3Median = ifelse(GATA3Median > 4, "+", "-"),
+         LHMedian = ifelse(LHMedian > 4, "+", "-"),
+         FSHMedian = ifelse(FSHMedian > 4, "+", "-"),
+         ACTHMedian = ifelse(ACTHMedian > 4, "+", "-"),
+         CAM52Median = ifelse(CAM52Median > 4, "+", "-"),
+         ERMedian = ifelse(ERMedian > 4, "+", "-"),
+         ASUMedian = ifelse(ASUMedian > 4, "+", "-")) %>% 
+  kable(align = "c")
+
+```
+
+In order for an impartial observer to make the diagnosis, perhaps I should just optimize the raw scores, arranged by newDx...
+
+```{r}
+library(formattable)
+
+tableSupplement <- formattable(orderedIHC2,
+            align =c("c","c","c","c","c", "c", "c", "c", "c", "c", "c", "c", "c", "r"), 
+            list(SF1Median = color_tile("white", "light blue"),
+                 GATA3Median = color_tile("white", "light blue"), 
+                 LHMedian = color_tile("white", "light blue"),
+                 FSHMedian = color_tile("white", "light blue"),
+                 Pit1Median = color_tile("white", "pink"),
+                 PRLMedian = color_tile("white", "pink"),
+                 GHMedian = color_tile("white", "pink"),
+                 TSHMedian = color_tile("white", "pink"),
+                 TPITMedian = color_tile("white", "yellow"),
+                 ACTHMedian = color_tile("white", "yellow"),
+                 CAM52Median = color_tile("white", "light green"),
+                 ERMedian = color_tile("white", "purple"),
+                 ASUMedian = color_tile("white", "purple")))
+
+tableSupplement
+```
+
+Now. This is great if I want to stop with an HTML display, but it sucks if I want another format. The hacks needed to get tableSupplement into a PDF, for example, are not worth the hassle. 
+
+Instead, I need to write a csv of orderedIHC2 and use Excel for table display. Luckily, Excel makes conditional formatting of cells pretty easy.
+
+```{r}
+orderedIHC2 %>% write_csv("orderedIHCforExcel.csv")
+```
+

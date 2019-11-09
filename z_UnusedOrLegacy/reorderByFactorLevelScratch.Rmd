@@ -1,0 +1,67 @@
+---
+title: "reorderingTable"
+author: "W. McDonald"
+date: "8/30/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Reordering a table for PitAdTMA8.0/TpitAnalysis
+
+The following is based on a a very nicely illustrated post on Stack Overflow at 
+
+<https://stackoverflow.com/questions/42497063/r-sorting-factor-by-level-frequency-and-plotting>
+
+```{r}
+library(tidyverse)
+
+set.seed(101)
+df <- data.frame(Var1=as.factor(sample(c("AB", "BC", "CD", "DE", "EF"),
+                            prob=c(0.1,0.5,0.2,0.05,0.15),
+                                   1000, replace=TRUE)))
+You want reorder(), I think. In general reorder(x,y,FUN) changes the order of levels of a factor x according to the results of applying function FUN to a second variable y. In this case, you can use FUN=length, and it doesn't really matter what you use for y.
+
+Set up data (I chose to modify the probabilities to make the result clearer):
+
+set.seed(101)
+df <- data.frame(Var1=as.factor(sample(c("AB", "BC", "CD", "DE", "EF"),
+                            prob=c(0.1,0.5,0.2,0.05,0.15),
+                                   1000, replace=TRUE)))
+
+# Wrong order
+
+print(g1 <- ggplot(df, aes(x=factor(1), fill=Var1))+
+   geom_bar(width=1, colour="black")+
+   coord_polar(theta="y")+
+   theme_void())
+```
+
+Note the nice bit of sampling for future use.
+
+Now reorder the factors:
+
+```{r}
+df$Var1 <- reorder(df$Var1,df$Var1,FUN=length)
+levels(df$Var1)
+```
+
+Check that the order is correct:
+
+```{r}
+sort(table(df$Var1))
+```
+
+Now the author of this post does something that loses me:
+
+> "Print the new plot (stick in the new data with %+% and flip the order of the legend with guide_legend(): you could also use function(x) -length(x) as FUN to change the order of the levels in the first place)."
+
+```{r}
+print(g1 %+% df + 
+    scale_fill_discrete(guide=guide_legend(reverse=TRUE)))
+```
+
+
+

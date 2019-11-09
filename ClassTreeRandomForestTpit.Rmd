@@ -1,0 +1,74 @@
+---
+title: "Classification Tree and Random Forest"
+author: "W. McDonald, MD"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(class)
+library(tidyverse)
+
+patma <- read_csv("data/TpitAddedVillaUpdate.csv")
+
+df <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median, finDx) %>%
+  na.omit()
+
+glimpse(df)
+
+# This gets divided into training and test sets.
+nrow(df)
+sample_rows <- sample(nrow(df), 100)
+df_train <- df[sample_rows,]
+df_test <- df[-sample_rows,]
+
+```
+
+## Classification tree
+
+```{r}
+library(rpart)
+
+model <- rpart(finDx ~ ., data = df_train, method = "class")
+
+df_test$pred <- predict(model, df_test, type = "class")
+
+table(df_test$finDx, df_test$pred)
+
+mean(df_test$finDx == df_test$pred)
+
+library(rpart.plot)
+rpart.plot(model)
+rpart.plot(model, type = 3, fallen.leaves = TRUE)
+
+```
+
+
+## Random forest
+
+```{r}
+library(randomForest)
+# randomForest wants newDx to be a factor. 
+df_train$finDx <- as.factor(df_train$finDx)
+glimpse(df_train)
+
+modelForest <- randomForest(finDx ~ ., data = df_train)
+df_test$pred2 <- predict(modelForest, df_test)
+table(df_test$finDx, df_test$pred2)
+mean(df_test$finDx == df_test$pred2)
+
+```
+
+
+
+```{r}
+knitr::knit_exit()
+```
+
+This is scrap work.

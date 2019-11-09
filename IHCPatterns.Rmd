@@ -1,0 +1,127 @@
+---
+title: "IHC Behavior"
+author: "W. McDonald"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Immunohistochemistry studies
+
+The goal of this Rmd page is to assemble the analyses and commentary addressing the behavior if IHC stains. This is in some ways the simplest, but most important analysis, since it shows an unmodified view of how the IHC behave.
+
+## Data import, wrangling.
+
+```{r echo=TRUE}
+library(tidyverse)
+
+patma <- read_csv("data/TpitAddedVillaUpdate.csv")
+
+```
+
+One way to think about IHC behavior is to see when it crops up AFTER the classes have been applied. The following procedure can be applied to any stain.
+
+```{r}
+tsh <- patma %>%
+  group_by(newDx) %>%
+  summarize(mean(TSHMedian, na.rm = TRUE)) 
+
+tsh
+```
+
+## IHC by diagnosis scatter plots
+
+A basic understanding of the staining patterns is an important first step. 
+
+Multiple ways to display these in a grid. The gridExtra package is pretty simple. See [this useful vignette](https://cran.r-project.org/web/packages/egg/vignettes/Ecosystem.html).
+
+```{r}
+library(gridExtra)
+p<-ggplot(patma, aes(finDx, TPITMedian))
+p1 <- p + geom_point(position=position_jitter(width=0.3, height=0.1)) +
+  theme_minimal() +
+  coord_flip() +
+  labs(x="Diagnostic Class") +
+  labs(y="Allred Score") +
+  labs(title="Tpit Median IHC Score")
+
+p<-ggplot(patma, aes(finDx, SF1Median))
+p2 <- p + geom_point(position=position_jitter(width=0.3, height=0.1)) +
+  theme_minimal() +
+  coord_flip() +
+  labs(x="") +
+  labs(y="Allred Score") +
+  labs(title="SF-1 Median IHC Score")
+
+p<-ggplot(patma, aes(finDx, Pit1Median))
+p3 <- p + geom_point(position=position_jitter(width=0.3, height=0.1)) +
+  theme_minimal() +
+  coord_flip() +
+  labs(x="") +
+  labs(y="Allred Score") +
+  labs(title="Pit-1 Median IHC Score")
+
+grid.arrange(p1, p2, p3, nrow = 1)
+```
+
+All of that is pretty complicated. More complicated than is probably tolerated by pathologists. Try simple histograms to help define cutpoints for determining positive and negative:
+
+```{r}
+ggplot(patma, aes(SF1Median)) + geom_histogram()
+ggplot(patma, aes(Pit1Median)) + geom_histogram()
+ggplot(patma, aes(TPITMedian)) + geom_histogram()
+ggplot(patma, aes(PRLMedian)) + geom_histogram()
+ggplot(patma, aes(GHMedian)) + geom_histogram()
+ggplot(patma, aes(TSHMedian)) + geom_histogram()
+ggplot(patma, aes(ACTHMedian)) + geom_histogram()
+ggplot(patma, aes(LHMedian)) + geom_histogram()
+ggplot(patma, aes(FSHMedian)) + geom_histogram()
+ggplot(patma, aes(GATA3Median)) + geom_histogram()
+```
+
+Since most markers are *mostly* Allred 0 (that is, negative), we have opportunities for improving the efficiency of our workup, and possibly for improving the accuracy of the algorithm by avoiding false positives and false negatives. 
+
+Trouble is, for many of these, the cases that do NOT stain greatly outnumber those that do stain, obscuring possible differences in the distribution of positively staining cases. By taking out the cases that show no staining, we get a better idea of the distribution of positivity. 
+
+```{r}
+patma %>%  
+  filter(Pit1Median > 0) %>% 
+  ggplot(aes(Pit1Median)) + geom_histogram()
+
+patma %>%  
+  filter(TPITMedian > 0) %>% 
+  ggplot(aes(TPITMedian)) + geom_histogram()
+
+patma %>%  
+  filter(GATA3Median > 0) %>% 
+  ggplot(aes(GATA3Median)) + geom_histogram()
+
+patma %>%  
+  filter(LHMedian > 0) %>% 
+  ggplot(aes(LHMedian)) + geom_histogram()
+
+patma %>%  
+  filter(FSHMedian > 0) %>% 
+  ggplot(aes(FSHMedian)) + geom_histogram()
+
+patma %>%  
+  filter(PRLMedian > 0) %>% 
+  ggplot(aes(PRLMedian)) + geom_histogram()
+
+patma %>%  
+  filter(GHMedian > 0) %>% 
+  ggplot(aes(GHMedian)) + geom_histogram()
+
+patma %>%  
+  filter(TSHMedian > 0) %>% 
+  ggplot(aes(TSHMedian)) + geom_histogram()
+
+patma %>%  
+  filter(ACTHMedian > 0) %>% 
+  ggplot(aes(ACTHMedian)) + geom_histogram()
+```
+
+Compare PRL and GATA3 distributions with those of LH and FSH (left-shifted, possibly insensitive or focally produced) or GH and TSH (right-shifted, nonspecific or variable immunoreactivity). This is consistent with the common observation that LH and FSH immunoreactivity is often focal and that GH and TSH suffer from background immunoreactivity issues. Both ACTH and GH IHC suffer from sensitivity and specificity challenges, displaying frequent background staining, and never reaching the crisp, 3+ IHC intensity that is frequently seen in PRL immunoreactivity, for instance.

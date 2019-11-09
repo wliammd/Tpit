@@ -1,0 +1,119 @@
+---
+title: "knnTpit"
+author: "W. McDonald"
+date: "9/15/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## knn on Tpit data
+
+I'll use the same variables that went into hierarchical clustering. Arguably, some should be trimmed out. Alpha subunit, LH, FSH might be carved out.
+
+```{r}
+library(class)
+library(tidyverse)
+
+patma <- read_csv("data/TpitAddedVillaUpdate.csv")
+
+df <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median, finDx) %>%
+  na.omit()
+
+glimpse(df)
+```
+
+## Randomization of the data set
+
+Randomization can be useful if a dataset is ordered by one or more of the variables; for instance,{iris} is arranged by species. While it might not be necessary for PitAdTMA, it is a worthwhile precaution in case some structure has crept into the data frame. 
+
+```{r}
+set.seed(2019) # required to reproduce the results
+rnum<- sample(rep(1:147)) # randomly generate numbers from 1 to 147
+rnum
+
+df <- df[rnum,]
+
+head(df)
+```
+
+## Now normalize the scores:
+
+Again, this step probably isn't necessary for PitAdTMA, but if I aspire to add other factors to the data, it will be. Hence, I do it here as an exercise. 
+
+```{r}
+normalize <- function(x){
+  return ((x-min(x))/(max(x)-min(x)))
+}
+
+patNew <- as.data.frame(lapply(df[,c(1:11)], normalize))
+head(patNew)
+```
+
+# Pull the classes out of testing and training sets. 
+
+KNN will make use of a testing and a training set data, informed by diagnostic classes. The function uses training data (in the case of PitAdTMA, normalized immunohistochemical scores), the diagnostic classes (the "right answer," if you will, that supervises the process), and applies the resulting model to a test set of IHC scores. Class information of the test set is then used to check the models performance.
+
+```{r}
+classes <- df$finDx
+class(classes)
+typeof(classes)
+
+trainClasses <- classes[1:127]
+trainClasses
+testClasses <- classes[128:147]
+testClasses
+```
+
+Now it's time to subset the dataset. It is divided into train and test sets as follows.
+
+```{r}
+patNew.train <- patNew[1:127,]
+patNew.test <- patNew[128:147,]
+```
+
+## Finally, we make the model:
+
+```{r}
+model <- knn(train = patNew.train, test = patNew.test, cl = trainClasses, k = 6, prob = TRUE)
+
+# By adding "prob = TRUE" above, we also generate the probabilities of each class. This might help assess the strength of each argument and point out areas of uncertainty.
+
+class_prob <- attr(model, "prob")
+
+head(model)
+head(class_prob)
+```
+
+## Verify the results:
+
+```{r}
+table(testClasses, model)
+mean(testClasses == model)
+```
+
+It's easy to glide past the use of mean() here, but that would be a mistake. It's a pretty cool way of showing how our predicted results match the actual results. 
+
+```{r}
+knitr::knit_exit()
+```
+The general procedure can also be illustrated like this (without randomization and normalization):
+
+```{r}
+# First pull out a vector of the classes
+classes <- traindf$Class
+
+# Now apply knn(). trainingdf and classes provide info that informs tthe testdf. 
+pred_classes <- knn(train = traindf[-1], test = testdf[-1], cl = classes)
+
+# Now pull out the known classes from testdf. 
+actual_classes <- testdf$Class
+
+# Time to compare the classes that knn() established and those of the testdf. 
+table(pred_classes, actual_classes)
+mean(actual_classes == pred_classes)
+```
+

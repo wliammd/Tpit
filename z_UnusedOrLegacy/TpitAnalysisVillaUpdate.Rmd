@@ -1,0 +1,244 @@
+---
+title: "TpitReport"
+author: "W. McDonald"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Goal
+
+The goal of this document is to reproducibly import, wrangle and analyse the full pituitary adenoma tissue microarray dataset, including all immunostains up to *Tpit*. *CAM5.2* staining pattern is included, as a relevant categorical variable. Otherwise, IHC staining extent and intensity are reported as Allred scores as previously published. 
+
+This analysis will rely on the tools of the tidyverse, when possible. 
+
+## Data import, wrangling.
+
+```{r echo=TRUE}
+library(tidyverse)
+
+patma <- read_csv("data/TpitAddedVillaUpdate.csv")
+
+newClass <- patma %>%
+  count(finDx, sort = TRUE)
+newClass
+sum(newClass$n)
+
+oldClass <- patma %>% 
+  count(Dx, sort = TRUE)
+oldClass
+sum(oldClass$n)
+```
+
+## Correlation matrix and p values for the correlations
+
+Beyond the R help documentation for cor(), I like the visualizations from [this site that uses corrplot](http://www.sthda.com/english/wiki/visualize-correlation-matrix-using-correlogram)
+
+The package Hmisc is used to generate p-values for the correlation matrix.
+
+```{r}
+library(corrplot)
+patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>% 
+  cor(y = NULL, use = "complete.obs", method = "pearson") %>% 
+  round(2)
+
+M <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median) %>% 
+  cor(y = NULL, use = "complete.obs", method = "pearson")
+
+corrplot(M, type = "upper", order = "hclust")
+
+# mat : is a matrix of data (function by Alboukadel Kassambara
+#PhD, see his webpage, cited above)
+# ... : further arguments to pass to the native R cor.test function
+cor.mtest <- function(mat, ...) {
+    mat <- as.matrix(mat)
+    n <- ncol(mat)
+    p.mat<- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(mat[, i], mat[, j], ...)
+            p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
+# matrix of the p-value of the correlation
+p.mat <- cor.mtest(M)
+head(p.mat[, 1:5])
+
+# Specialized the insignificant value according to the significant level: this crosses out insig. values
+corrplot(M, type="upper", order="hclust", 
+         p.mat = p.mat, sig.level = 0.05)
+
+# Leave blank on no significant coefficient
+corrplot(M, type="upper", order="hclust", 
+         p.mat = p.mat, sig.level = 0.05, insig = "blank")
+
+# Another way to get p-values manually is to use the Hmisc package: 
+library(Hmisc)
+
+pvalues <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median) %>% 
+  cor(y = NULL, use = "complete.obs", method = "pearson") %>%
+  as.matrix() %>%
+  rcorr()
+
+pvalues
+
+```
+
+## Hierarchical clustering
+
+Note that the hierarchical clustering profits from name transparency when producing the final plot. The first bits of code make an object that has lost newDx and CaseID in favor of a row name that bears a combination of the two. 
+
+```{r}
+rowsAssigned <- patma %>%
+  unite("RowNames", c("CaseID", "finDx")) %>%
+  column_to_rownames(var = "RowNames")
+
+df <- rowsAssigned %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median) %>%
+  na.omit()
+
+d <- dist(df, method = "euclidean")
+
+hc1 <- hclust(d, method = "complete")
+
+plot(hc1, 
+     main = "", # As an alternative: main = "Hierarchical Clustering",
+     xlab = "", 
+     sub = "", 
+     cex.sub = 1.5,
+     cex = 0.5,
+     #      cex.main = 2, #this doesn't matter since the label is supressed in line 100 with main = ""
+     pty = "m", 
+     hang = -2)
+
+```
+
+## K-means cluster analysis and display using clusplot()
+
+Two things are recommended when performing K-means clustering: assign a large nstart and using the setseed() function
+
+```{r}
+set.seed(2019)
+rowsAssigned <- patma %>%
+  unite("RowNames", c("CaseID", "finDx")) %>%
+  column_to_rownames(var = "RowNames")
+
+km6 <- rowsAssigned %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
+  na.omit() %>% 
+  kmeans(6,nstart=20)
+
+km6
+km.g6 <- km6$cluster
+km.g6 %>% sort()
+
+```
+
+## Principle component analysis (PCA)
+
+Work in progress: check out [this site for some good techniques](http://huboqiang.cn/2016/03/03/RscatterPlotPCA).
+
+See also [this page](https://community.rstudio.com/t/tidyverse-solutions-for-factor-analysis-principal-component-analysis/4504).
+
+PCA using tidyverse tools requires a little different method. See [this work](https://tbradley1013.github.io/2018/02/01/pca-in-a-tidy-verse-framework/) by Tyler Bradley. 
+
+```{r}
+pc <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
+  na.omit() %>% 
+  prcomp(center = TRUE, scale = TRUE)
+
+summary(pc) # these list the principle components in decending explanatory ability. See proporation of overall variance.
+plot(pc) # how many components do you want to include? No set answer
+pc # rotation section lets us know the relationship between IHC and principle components
+predict(pc)
+biplot(pc) # VERY interesting in its ability to distinguish between the Pit1, SF1 and Tpit groups
+
+library(ggfortify)
+df <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
+  na.omit()
+
+trimmedSet <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, newDx) %>%
+  na.omit()
+
+autoplot(prcomp(df), data = trimmedSet, colour = 'newDx', size = 8)
+
+```
+
+## T-SNE (t-Distributed Stochastic Neighbor Embedding) analysis
+
+This is an interesting method that is usually compared with PCA plots. See [this page](https://stackoverflow.com/questions/44837536/how-to-use-ggplot-to-plot-t-sne-clustering).
+
+DataCamp has a tutorial for python that describes T-SNE at [this page](https://www.datacamp.com/community/tutorials/introduction-t-sne).
+
+```{r}
+library(Rtsne)
+patma_unique <- patma %>% 
+  na.omit() %>% 
+  unique()
+patma_matrix <- as.matrix(patma_unique[,c(4:12, 18, 23, 24)])
+set.seed(2019)
+tsne_out <- Rtsne(patma_matrix, check_duplicates = FALSE, theta = 0.0) 
+
+library(ggplot2)
+tsne_plot <- data.frame(x = tsne_out$Y[,1], y = tsne_out$Y[,2], Diagnoses = patma_unique$newDx)
+
+ggplot(tsne_plot) + 
+  geom_point(aes(x=x, y=y, color=Diagnoses), size = 5) +
+  theme_minimal()
+```
+
+## K nearest neighbors supervised learning
+
+This [R-blogger post](https://www.r-bloggers.com/k-nearest-neighbor-step-by-step-tutorial/) by Deepanshu Bhalla is a pretty clean introduction to KNN, and does a nice job distinguishing it from K-means analysis, which is often confused with it. [This demo](http://rpubs.com/Nitika/kNN_Iris) also has some nice advice.
+
+This gets quite involved. See knnTpit.Rmd.
+
+## Factor analysis
+
+
+```{r}
+
+```
+
+## Classification trees
+
+This [webpage](http://www.sthda.com/english/articles/35-statistical-machine-learning-essentials/141-cart-model-decision-tree-essentials/) has a nice discussion of CART analyses. 
+
+```{r}
+library(rpart)
+trimmedSet <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, newDx) %>%
+  na.omit()
+
+model <- rpart(newDx ~., data = trimmedSet)
+par(xpd = NA) # otherwise on some devices the text is clipped
+plot(model)
+text(model, digits = 3)
+```
+
+# The Classification Problem in Pituitary Adenoma: The Role of Tpit Immunohistochemistry
+
+Pituitary adenoma classification suffers from a variety of problems. Initially developed with electron microscopy in mind, the World Health Organization classification retains many of the vestiges of those early studies and their problems: small numbers, small samples, with the most important series apparently jumping primary literature for publication in textbooks. Further adding to the confusion, no one seems to use the classification, preferring instead to apply simpler classifications (refs, especially Asa and Mete's epidemilogy paper, the German series, any French series). 
+
+The resulting WHO classification has been difficult to refine, even  with the advent of new IHC for transcription factors. Substantive arguments about prevalence and classification are avoided in favor of unimportant nomenclature changes (pituitary neuroendocrine tumor or PitNET is neither more brief nor more useful than its precursor, but it enjoys the praise of endocrine pathologists, and it sounds clever. Cleverness notwithstanding, it fails to clarify the fundamental problem of classification. 
+
+We published a series of 136 PitNETs in 2017 in an attempt to improve the situation. At the time, reagents suitable for formalin-fixed, paraffin-embedded material were available for only Steroidogenic Factor 1 and Pit-1. Nonetheless, we were able to show great improvements, both in diagnostic efficiency and diagnostic accuracy, and related a simple algorithm that was sufficient to classify most PitNETs with three IHC stains. 
+
+Pituitary adenomas can be classified in three broad families based on their resemblance to developmental pathways of the anterior pituitary (1). While immunohistochemical stains for the six anterior pituitary hormones (prolactin, growth hormone, thyroid stimulating hormone, luteinizing hormone, follicle stimulating hormone and adrenocorticotropin (ACTH)) are widely used, some of these suffer from suboptimal sensitivity and specificity. ACTH immunoreactivity in particular is widely regarded as lacking in sensitivity and specificity. This is problematic, since ACTH-producing macroadenomas are considered more aggressive (2), and the resection of hormonally active ACTH-producing tumors can cause life-threatening cortisol insufficiency if left untreated. That is, both over- and under-detection of ACTH-producing tumors can have clinical consequences. 
+
+ACTH-producing adenomas account for approximately 17% of pituitary adenomas (3) . T-box transcription factor (T-Pit) mediates the corticotroph pathway (4, 5). Until recently, immunostains for T-Pit were restricted to frozen material, but the introduction of a polyclonal antibody to T-pit developed and validated according to standardized procedures within the Human Protein Atlas (http://www.proteinatlas.org) provides a reagent that reportedly overcomes this restriction. 
+
+In this work, we use T-Pit IHC in conjunction with IHC for SF-1 and Pit-1 to classify pituitary adenomas. According to Sjostedt et al. (6), T-Pit IHC is more sensitive and specific than ACTH IHC. Our findings in this series support this assertion. 

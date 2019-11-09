@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Goal
 
-The goal of this document is to reproducibly import, wrangle and analyse the full pituitary adenoma tissue microarray dataset, including all immunostains up to *Tpit*. *CAM5.2* staining pattern is included, as a relevant categorical variable. Otherwise, IHC staining extant and intensity are reported as Allred scores as previously published. 
+The goal of this document is to reproducibly import, wrangle and analyse the full pituitary adenoma tissue microarray dataset, including all immunostains up to *Tpit*. *CAM5.2* staining pattern is included, as a relevant categorical variable. Otherwise, IHC staining extent and intensity are reported as Allred scores as previously published. 
 
 This analysis will rely on the tools of the tidyverse, when possible. 
 
@@ -73,6 +73,58 @@ p3 <- p + geom_point(position=position_jitter(width=0.3, height=0.1)) +
 
 grid.arrange(p1, p2, p3, nrow = 1)
 
+```
+
+All of that is pretty complicated. More complicated than is probably tolerated by pathologists. Try simple histograms to help define cutpoints for determining positive and negative:
+
+```{r}
+ggplot(patma, aes(SF1Median)) + geom_histogram()
+ggplot(patma, aes(Pit1Median)) + geom_histogram()
+ggplot(patma, aes(TPITMedian)) + geom_histogram()
+ggplot(patma, aes(PRLMedian)) + geom_histogram()
+ggplot(patma, aes(GHMedian)) + geom_histogram()
+ggplot(patma, aes(TSHMedian)) + geom_histogram()
+ggplot(patma, aes(ACTHMedian)) + geom_histogram()
+ggplot(patma, aes(LHMedian)) + geom_histogram()
+ggplot(patma, aes(FSHMedian)) + geom_histogram()
+ggplot(patma, aes(GATA3Median)) + geom_histogram()
+
+```
+
+Trouble is, for many of these, the cases that do NOT stain greatly outnumber those that do stain, obscuring possible differences in the distribution of positively staining cases:
+
+```{r}
+patma %>%  
+  filter(Pit1Median > 0) %>% 
+  ggplot(aes(Pit1Median)) + geom_histogram()
+
+patma %>%  
+  filter(TPITMedian > 0) %>% 
+  ggplot(aes(TPITMedian)) + geom_histogram()
+
+patma %>%  
+  filter(GATA3Median > 0) %>% 
+  ggplot(aes(GATA3Median)) + geom_histogram()
+
+patma %>%  
+  filter(LHMedian > 0) %>% 
+  ggplot(aes(LHMedian)) + geom_histogram()
+
+patma %>%  
+  filter(FSHMedian > 0) %>% 
+  ggplot(aes(FSHMedian)) + geom_histogram()
+
+patma %>%  
+  filter(PRLMedian > 0) %>% 
+  ggplot(aes(PRLMedian)) + geom_histogram()
+
+patma %>%  
+  filter(GHMedian > 0) %>% 
+  ggplot(aes(GHMedian)) + geom_histogram()
+
+patma %>%  
+  filter(TSHMedian > 0) %>% 
+  ggplot(aes(TSHMedian)) + geom_histogram()
 ```
 
 
@@ -248,12 +300,7 @@ ggplot(tsne_plot) +
 
 This [R-blogger post](https://www.r-bloggers.com/k-nearest-neighbor-step-by-step-tutorial/) by Deepanshu Bhalla is a pretty clean introduction to KNN, and does a nice job distinguishing it from K-means analysis, which is often confused with it. [This demo](http://rpubs.com/Nitika/kNN_Iris) also has some nice advice.
 
-Remember than KNN is a supervised method and that K-means is unsupervised. 
-
-```{r}
-
-```
-
+This gets quite involved. See knnTpit.Rmd.
 
 ## Factor analysis
 
@@ -280,14 +327,14 @@ text(model, digits = 3)
 
 # The Classification Problem in Pituitary Adenoma: The Role of Tpit Immunohistochemistry
 
-Pituitary adenoma classification suffers from a variety of problems. Initially developed with electron microscopy in mind, the World Health Organization classification retains many of the vestiges of those early studies and their problems: small numbers, small samples, with the most important series apparently jumping primary literature for publication in textbooks.
+Pituitary adenoma classification suffers from a variety of problems. Initially developed with electron microscopy in mind, the World Health Organization classification retains many of the vestiges of those early studies and their problems: small numbers, small samples, with the most important series apparently jumping primary literature for publication in textbooks. Further adding to the confusion, no one seems to use the classification, preferring instead to apply simpler classifications (refs, especially Asa and Mete's epidemilogy paper, the German series, any French series). 
 
-The effect was to establish a classification that has been difficult to refine, even  with the advent of new IHC for transcription factors. Substantive arguments about prevalence and classification are avoided in favor of unimportant nomenclature changes (pituitary neuroendocrine tumor or PitNET is neither more brief nor more useful than its precursor, but it enjoys the praise of endocrine pathologists, and it sounds clever. Cleverness notwithstanding, it fails to clarify the fundamental problem of classification. 
+The resulting WHO classification has been difficult to refine, even  with the advent of new IHC for transcription factors. Substantive arguments about prevalence and classification are avoided in favor of unimportant nomenclature changes (pituitary neuroendocrine tumor or PitNET is neither more brief nor more useful than its precursor, but it enjoys the praise of endocrine pathologists, and it sounds clever. Cleverness notwithstanding, it fails to clarify the fundamental problem of classification. 
 
-We published a series of 136 PitNETs in 2017 in an attempt to improve the situation. At the time, reagents suitable for formalin-fixed, paraffin-embedded material were available for only Steroidogenic Factor 1 and Pit-1. Nonetheless, we were able to show great improvements, both in terms of diagnostic efficiency and diagnostic accuracy, with the use of these stains, and related a simple algorithm that was sufficient to diagnose most PitNETs with three IHC stains. 
+We published a series of 136 PitNETs in 2017 in an attempt to improve the situation. At the time, reagents suitable for formalin-fixed, paraffin-embedded material were available for only Steroidogenic Factor 1 and Pit-1. Nonetheless, we were able to show great improvements, both in diagnostic efficiency and diagnostic accuracy, and related a simple algorithm that was sufficient to classify most PitNETs with three IHC stains. 
 
 Pituitary adenomas can be classified in three broad families based on their resemblance to developmental pathways of the anterior pituitary (1). While immunohistochemical stains for the six anterior pituitary hormones (prolactin, growth hormone, thyroid stimulating hormone, luteinizing hormone, follicle stimulating hormone and adrenocorticotropin (ACTH)) are widely used, some of these suffer from suboptimal sensitivity and specificity. ACTH immunoreactivity in particular is widely regarded as lacking in sensitivity and specificity. This is problematic, since ACTH-producing macroadenomas are considered more aggressive (2), and the resection of hormonally active ACTH-producing tumors can cause life-threatening cortisol insufficiency if left untreated. That is, both over- and under-detection of ACTH-producing tumors can have clinical consequences. 
 
 ACTH-producing adenomas account for approximately 17% of pituitary adenomas (3) . T-box transcription factor (T-Pit) mediates the corticotroph pathway (4, 5). Until recently, immunostains for T-Pit were restricted to frozen material, but the introduction of a polyclonal antibody to T-pit developed and validated according to standardized procedures within the Human Protein Atlas (http://www.proteinatlas.org) provides a reagent that reportedly overcomes this restriction. 
 
-In this work, we use T-Pit IHC in conjunction with IHC for SF-1 and Pit-1 to classify pituitary adenomas. According to Sjostedt et al. (6), T-Pit IHC is more sensitive and specific than ACTH IHC. 
+In this work, we use T-Pit IHC in conjunction with IHC for SF-1 and Pit-1 to classify pituitary adenomas. According to Sjostedt et al. (6), T-Pit IHC is more sensitive and specific than ACTH IHC. Our findings in this series support this assertion. 
