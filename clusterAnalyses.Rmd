@@ -1,5 +1,5 @@
 ---
-title: "Clustering Analyses"
+title: "Unsupervised Methods: Clustering Analyses"
 author: "W. McDonald"
 date: "11/10/2019"
 output: html_document
@@ -18,7 +18,7 @@ patma <- read_csv("data/TpitAddedVillaUpdate.csv")
 
 # Get rid of the Note column
 patma <- patma[-30]
-patma
+glimpse(patma)
 ```
 # Clustering analyses
 
@@ -112,6 +112,31 @@ plot(jitter(df$SF1Median, 3), jitter(df$Pit1Median, 3),
      ylab = "Pit1")
 ```
 
+## Comparing hierarchical clustering and k-means clustering
+
+The DataCamp course on unsupervised clustering by Hank Roark showed a very nice way to compare hierarchical and k-means clustering. He also stressed the value of normalization, even for those things on the same scale, since mean and standard deviation can vary greatly between features (that is, variables). 
+
+```{r}
+df <-  patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median) %>%
+  na.omit()
+
+df_scaled <- scale(df)
+
+hclust.df <- hclust(dist(df_scaled), method = "complete")
+km.df <- kmeans(df_scaled, 
+                centers = 3,
+                nstart = 20,
+                iter.max = 50)
+cut.df <- cutree(hclust.df, k = 3)
+
+table(km.df$cluster, cut.df)
+
+```
+
+Ultimately, if one uses 3 groups, the two models agree perfectly in 96/147 (65%) of cases. 
+
+
 ## Principle component analysis (PCA)
 
 Work in progress: check out [this site for some good techniques](http://huboqiang.cn/2016/03/03/RscatterPlotPCA).
@@ -124,13 +149,25 @@ PCA using tidyverse tools requires a little different method. See [this work](ht
 pc <- patma %>% 
   select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
   na.omit() %>% 
-  prcomp(center = TRUE, scale = TRUE)
+  prcomp(center = TRUE, scale = FALSE)
 
 summary(pc) # these list the principle components in decending explanatory ability. See proporation of overall variance.
 plot(pc) # how many components do you want to include? No set answer
 pc # rotation section lets us know the relationship between IHC and principle components
 predict(pc)
 biplot(pc) # VERY interesting in its ability to distinguish between the Pit1, SF1 and Tpit groups
+
+# Scree plots are also useful, and common. 
+
+pr.var <- pc$sdev^2
+pve <- pr.var/sum(pr.var)
+plot(pve, xlab = "Principle Component",
+     ylab = "Proportion of Variance Explained",
+     ylim = c(0,1), type = "b")
+
+plot(cumsum(pve), xlab = "Principle Component",
+     ylab = "Cumulative Proportion of Variance Explained",
+     ylim = c(0,1), type = "b")
 
 library(ggfortify)
 df <- patma %>% 
@@ -145,6 +182,10 @@ trimmedSet <- patma %>%
 
 autoplot(prcomp(df), data = trimmedSet, colour = 'finDx', size = 8)
 ```
+
+Notes on the scaling of PCA: it's interesting to compare scale = TRUE and scale = FALSE biplots of the PCA data. While scaling may erase differences in mean and SD of IHC scores, but not change the vector direction, NOT scaling allows the principle drivers of the classification to be clear: SF1, Tpit, and Pit-1. Consider displaying both of these. 
+
+Consider adding ASU, GATA3, ER, etc. into the model and studying the vectors. Can this be used to pick features?
 
 ## T-SNE (t-Distributed Stochastic Neighbor Embedding) analysis
 
