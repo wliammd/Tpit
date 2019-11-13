@@ -26,7 +26,7 @@ One way to think about IHC behavior is to see when it crops up AFTER the classes
 
 ```{r}
 tsh <- patma %>%
-  group_by(newDx) %>%
+  group_by(finDx) %>%
   summarize(mean(TSHMedian, na.rm = TRUE)) 
 
 tsh

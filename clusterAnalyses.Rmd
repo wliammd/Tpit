@@ -1,0 +1,190 @@
+---
+title: "Clustering Analyses"
+author: "W. McDonald"
+date: "11/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data import
+
+```{r echo=TRUE}
+library(tidyverse)
+
+patma <- read_csv("data/TpitAddedVillaUpdate.csv")
+
+# Get rid of the Note column
+patma <- patma[-30]
+patma
+```
+# Clustering analyses
+
+## Hierarchical clustering
+
+Note that the hierarchical clustering profits from name transparency when producing the final plot. The first bits of code make an object that has lost newDx and CaseID in favor of a row name that bears a combination of the two. 
+
+```{r}
+rowsAssigned <- patma %>%
+  unite("RowNames", c("CaseID", "finDx")) %>%
+  column_to_rownames(var = "RowNames")
+
+df <- rowsAssigned %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median) %>%
+  na.omit()
+
+d <- dist(df, method = "euclidean")
+
+hc1 <- hclust(d, method = "complete")
+
+plot(hc1, 
+     main = "", # As an alternative: main = "Hierarchical Clustering",
+     xlab = "", 
+     sub = "", 
+     cex.sub = 1.5,
+     cex = 0.5,
+     #      cex.main = 2, #this doesn't matter since the label is supressed in line 100 with main = ""
+     pty = "m", 
+     hang = -2)
+```
+
+## K-means cluster analysis and display using clusplot()
+
+Two things are recommended when performing K-means clustering: assign a large nstart and using the setseed() function
+
+```{r}
+set.seed(2019)
+rowsAssigned <- patma %>%
+  unite("RowNames", c("CaseID", "finDx")) %>%
+  column_to_rownames(var = "RowNames")
+
+km6 <- rowsAssigned %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
+  na.omit() %>% 
+  kmeans(6,nstart=20)
+
+glimpse(km6)
+str(km6)
+
+km6$cluster %>% sort()
+```
+
+Let's try this again starting with ideas from the DataCamp course by Hank Roark:
+
+```{r}
+rowsAssigned <- patma %>%
+  unite("RowNames", c("CaseID", "finDx")) %>%
+  column_to_rownames(var = "RowNames")
+
+df <- rowsAssigned %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, ASUMedian, GATA3Median) %>%
+  na.omit()
+
+wss <- 0
+
+for (i in 1:15) {
+  km.out <- kmeans(df, centers = i, nstart = 20, iter.max = 50)
+  wss[i] <- km.out$tot.withinss
+}
+
+plot(1:15, wss, type = "b",
+     xlab = "Number of Clusters",
+     ylab = "Within group sum of squares")
+
+k <- 3
+
+km.out <- kmeans(df, centers = 3, nstart = 20, iter.max = 50)
+
+plot(jitter(df$SF1Median, 3), jitter(df$TPITMedian, 3),
+     pch = 19,
+     col = km.out$cluster,
+     main = paste("k-means clustering of IHC with", k, "clusters"),
+     xlab = "SF1",
+     ylab = "Tpit")
+
+plot(jitter(df$SF1Median, 3), jitter(df$Pit1Median, 3),
+     pch = 19,
+     col = km.out$cluster,
+     main = paste("k-means clustering of IHC with", k, "clusters"),
+     xlab = "SF1",
+     ylab = "Pit1")
+```
+
+## Principle component analysis (PCA)
+
+Work in progress: check out [this site for some good techniques](http://huboqiang.cn/2016/03/03/RscatterPlotPCA).
+
+See also [this page](https://community.rstudio.com/t/tidyverse-solutions-for-factor-analysis-principal-component-analysis/4504).
+
+PCA using tidyverse tools requires a little different method. See [this work](https://tbradley1013.github.io/2018/02/01/pca-in-a-tidy-verse-framework/) by Tyler Bradley. 
+
+```{r}
+pc <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
+  na.omit() %>% 
+  prcomp(center = TRUE, scale = TRUE)
+
+summary(pc) # these list the principle components in decending explanatory ability. See proporation of overall variance.
+plot(pc) # how many components do you want to include? No set answer
+pc # rotation section lets us know the relationship between IHC and principle components
+predict(pc)
+biplot(pc) # VERY interesting in its ability to distinguish between the Pit1, SF1 and Tpit groups
+
+library(ggfortify)
+df <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
+  na.omit()
+
+trimmedSet <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, finDx) %>%
+  na.omit()
+
+# Try fct_lumping the trimmed set so that the principle component display doesn't look so busy. See GATA3 code to see how I did it then. 
+
+autoplot(prcomp(df), data = trimmedSet, colour = 'finDx', size = 8)
+```
+
+## T-SNE (t-Distributed Stochastic Neighbor Embedding) analysis
+
+This is an interesting method that is usually compared with PCA plots. See [this page](https://stackoverflow.com/questions/44837536/how-to-use-ggplot-to-plot-t-sne-clustering).
+
+DataCamp has a tutorial for python that describes T-SNE at [this page](https://www.datacamp.com/community/tutorials/introduction-t-sne).
+
+```{r}
+library(Rtsne)
+patma_unique <- patma %>% 
+  na.omit() %>% 
+  unique()
+
+patma_matrix <- as.matrix(patma_unique[,c(4:12, 18, 23, 24)])
+
+set.seed(2019)
+tsne_out <- Rtsne(patma_matrix, check_duplicates = FALSE, theta = 0.0) 
+
+library(ggplot2)
+tsne_plot <- data.frame(x = tsne_out$Y[,1], y = tsne_out$Y[,2], Diagnoses = patma_unique$finDx)
+
+ggplot(tsne_plot) + 
+  geom_point(aes(x=x, y=y, color=Diagnoses), size = 5) +
+  theme_minimal()
+```
+
+Note that I removed column 30 from this version of patma: the NA's played havoc with the Rtsne procedure (the na.omit struck all cases without a note). I need to be on the lookout for similar problems using this set.
+
+## Factor analysis
+
+Easy to do. Hard to interpret. Explain these.
+
+```{r}
+df <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian) %>%
+  na.omit()
+
+factanal(df, 1)
+factanal(df, 2)
+factanal(df, 3)
+factanal(df, 4)
+```
+

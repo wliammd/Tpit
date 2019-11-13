@@ -42,8 +42,7 @@ orderedIHC %>%
          TSHMedian = ifelse(TSHMedian > 4, "+", "-")) %>% 
   kable(align = "c")
 
-# I'm ignoring a more parsimonious bit of coding here in favor of transparency. Apologies. I should figure out a more elegant way to do this.           
-  
+# I'm ignoring a more parsimonious bit of coding here in favor of transparency. Apologies. I should figure out a more elegant way to do this. 
 ```
 
 I'd like to compare the distributions of all the Allred scores by histogram in stacked figures. 

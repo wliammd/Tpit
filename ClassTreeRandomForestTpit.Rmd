@@ -65,10 +65,25 @@ mean(df_test$finDx == df_test$pred2)
 
 ```
 
-
-
 ```{r}
 knitr::knit_exit()
 ```
 
 This is scrap work.
+
+## Classification trees (previous attempt)
+
+This [webpage](http://www.sthda.com/english/articles/35-statistical-machine-learning-essentials/141-cart-model-decision-tree-essentials/) has a nice discussion of CART analyses. 
+
+```{r}
+library(rpart)
+trimmedSet <- patma %>% 
+  select(SF1Median, Pit1Median, TPITMedian, PRLMedian, GHMedian, TSHMedian, LHMedian, FSHMedian, ACTHMedian, newDx) %>%
+  na.omit()
+
+model <- rpart(newDx ~., data = trimmedSet)
+par(xpd = NA) # otherwise on some devices the text is clipped
+plot(model)
+text(model, digits = 3)
+```
+
