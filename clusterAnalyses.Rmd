@@ -155,7 +155,7 @@ summary(pc) # these list the principle components in decending explanatory abili
 plot(pc) # how many components do you want to include? No set answer
 pc # rotation section lets us know the relationship between IHC and principle components
 predict(pc)
-biplot(pc) # VERY interesting in its ability to distinguish between the Pit1, SF1 and Tpit groups
+biplot(pc) # VERY interesting in its ability to distinguish between the Pit1, SF1 and Tpit groups. Change xlim and ylim to improve legibility.
 
 # Scree plots are also useful, and common. 
 

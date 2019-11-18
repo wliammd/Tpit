@@ -1,0 +1,186 @@
+---
+title: "SensSpecPPVNPV Studies pitadtma8.0"
+author: "W. McDonald"
+date: "11/17/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Calculating test sensitivity, specificity, PPV and NPV
+
+## Data import and generation of manDx
+
+The first step is to bring in the data
+
+```{r}
+library(tidyverse)
+library(caret)
+
+patma <- read_csv("data/TpitAddedVillaUpdate.csv")
+
+# Get rid of the Note column
+patma <- patma[-30]
+glimpse(patma)
+```
+
+A managerial group would greatly simplify the tast of supervised and unsupervised efforts, reduce the likelihood of overfitting, and permit calculation of sensitivity, specificity, positive predictive value and negative predictive value. 
+
+First, however, I focus below on the simple calculation of sensitivity, specificity, PPV and NPV. Since true positive will be defined to include all classes that pertain to the variable, it will be unnecessary to establish managerial groups. It also has the advantage of allowing stains like alpha subunit to contain cross-family staining patterns. 
+
+
+## SF-1
+However, the managerial groups don't always tell the whole story. SF-1 is the best example of this. SF-1 might be legitimately positive in plurihormonal GH adenomas. If it is considered true positive in this setting, then PlurGH has to be included in calculations of test characteristics, as follows. 
+
+TP = GON or PlurGH
+
+```{r}
+truth <- as.factor(if_else(patma$finDx %in% c("GON", "PlurGH"), "pos", "neg"))
+pred <- as.factor(if_else(patma$SF1Median > 4, "pos", "neg"))
+
+sensitivity(pred, truth, positive = "pos") %>% round(2)
+specificity(pred, truth, negative = "neg") %>% round(2)
+posPredValue(pred, truth, positive = "pos") %>% round(2)
+negPredValue(pred, truth, negative =  "neg") %>% round(2)
+```
+
+If, on the other hand, it is NOT considered true positive in PlurGH cases, then it looks like this:
+
+```{r}
+truth <- as.factor(if_else(patma$finDx == "GON", "pos", "neg"))
+pred <- as.factor(if_else(patma$SF1Median > 4, "pos", "neg"))
+
+sensitivity(pred, truth, positive = "pos") %>% round(2)
+specificity(pred, truth, negative = "neg") %>% round(2)
+posPredValue(pred, truth, positive = "pos") %>% round(2)
+negPredValue(pred, truth, negative = "neg") %>% round(2)
+```
+
+So SF-1 looks less useful in this setting. 
+
+## GATA3
+
+Also important as a backup factor, the question around GATA3 hinges on the four null cell adenomas in the set that might better be classified as gonadotrophs. It is premature to make this coding switch, I think, so it will likely show lower specificity as a result.
+
+```{r}
+truth <- as.factor(if_else(patma$finDx == "GON", "pos", "neg"))
+pred <- as.factor(if_else(patma$GATA3Median > 4, "pos", "neg"))
+
+sensitivity(pred, truth, positive = "pos") %>% round(2)
+specificity(pred, truth, negative = "neg") %>% round(2)
+posPredValue(pred, truth, positive = "pos") %>% round(2)
+negPredValue(pred, truth, negative = "neg") %>% round(2)
+```
+
+# LH
+
+Recognizing that LH is more frequently patchy in its staining pattern, the cutoff of positive will be dropped to above 2.
+
+```{r}
+truth <- as.factor(if_else(patma$finDx == "GON", "pos", "neg"))
+pred <- as.factor(if_else(patma$LHMedian > 2, "pos", "neg"))
+
+sensitivity(pred, truth, positive = "pos") %>% round(2)
+specificity(pred, truth, negative = "neg") %>% round(2)
+posPredValue(pred, truth, positive = "pos") %>% round(2)
+negPredValue(pred, truth, negative = "neg") %>% round(2)
+```
+
+## FSH 
+
+In our experience, FSH also usually has a patchy staining pattern. Hence, the cutoff will also be > 2. 
+
+```{r}
+truth <- as.factor(if_else(patma$finDx == "GON", "pos", "neg"))
+pred <- as.factor(if_else(patma$FSHMedian > 2, "pos", "neg"))
+
+sensitivity(pred, truth, positive = "pos") %>% round(2)
+specificity(pred, truth, negative = "neg") %>% round(2)
+posPredValue(pred, truth, positive = "pos") %>% round(2)
+negPredValue(pred, truth, negative = "neg") %>% round(2)
+```
+
+## Alpha subunit
+
+Accommodations must be made, since this marker can be found in gonadotrophs and TSH-expressing tumors. A long list of Pit-1 family members expressing TSH is added to GON below to be as permissive as possible. As a practicing pathologist, I still find it worthless.
+
+```{r}
+truth <- as.factor(if_else(patma$finDx %in% c("GON", "TSH(s)", "TSH+", "PlurGH", "GH+(DG)", "PRL+", "PIT1(s)"), "pos", "neg"))
+pred <- as.factor(if_else(patma$ASUMedian > 4, "pos", "neg"))
+
+sensitivity(pred, truth, positive = "pos") %>% round(2)
+specificity(pred, truth, negative = "neg") %>% round(2)
+posPredValue(pred, truth, positive = "pos") %>% round(2)
+negPredValue(pred, truth, negative = "neg") %>% round(2)
+```
+
+## Alpha estrogen receptor
+
+Asa and Mete included this marker in their 2018 epidemiology piece. First, for gonadotrophs alone , it has the following characteristics.
+
+```{r}
+truth <- as.factor(if_else(patma$finDx == "GON", "pos", "neg"))
+pred <- as.factor(if_else(patma$ERMedian > 4, "pos", "neg"))
+
+sensitivity(pred, truth, positive = "pos") %>% round(2)
+specificity(pred, truth, negative = "neg") %>% round(2)
+posPredValue(pred, truth, positive = "pos") %>% round(2)
+negPredValue(pred, truth, negative = "neg") %>% round(2)
+```
+
+If the focus is on prolactinoma alone, the calculations are as follows:
+
+```{r}
+truth <- as.factor(if_else(patma$finDx == "PRL", "pos", "neg"))
+pred <- as.factor(if_else(patma$ERMedian > 4, "pos", "neg"))
+
+sensitivity(pred, truth, positive = "pos") %>% round(2)
+specificity(pred, truth, negative = "neg") %>% round(2)
+posPredValue(pred, truth, positive = "pos") %>% round(2)
+negPredValue(pred, truth, negative = "neg") %>% round(2)
+```
+
+## Tpit
+
+Corticotrophs include silent corticotrophs and those associated with Cushing disease. In our series, the latter are only represented by densely granulated versions. Calculations resemble those for SF-1 when we include PlurGH:
+
+```{r}
+truth <- as.factor(if_else(patma$finDx %in% c("ACTH(s)", "ACTH(DG)"), "pos", "neg"))
+pred <- as.factor(if_else(patma$TPITMedian > 4, "pos", "neg"))
+
+sensitivity(pred, truth, positive = "pos") %>% round(2)
+specificity(pred, truth, negative = "neg") %>% round(2)
+posPredValue(pred, truth, positive = "pos") %>% round(2)
+negPredValue(pred, truth, negative = "neg") %>% round(2)
+```
+
+## ACTH
+
+Known as a problematic stain by many labs, ACTH test characteristics are calculated like those of Tpit.
+
+```{r}
+truth <- as.factor(if_else(patma$finDx %in% c("ACTH(s)", "ACTH(DG)"), "pos", "neg"))
+pred <- as.factor(if_else(patma$ACTHMedian > 4, "pos", "neg"))
+
+sensitivity(pred, truth, positive = "pos") %>% round(2)
+specificity(pred, truth, negative = "neg") %>% round(2)
+posPredValue(pred, truth, positive = "pos") %>% round(2)
+negPredValue(pred, truth, negative = "neg") %>% round(2)
+```
+
+## CAM5.2
+
+Low molecular weight cytokeratins have also be used as a check on corticotrophs. Does this idea hold up?
+
+```{r}
+truth <- as.factor(if_else(patma$finDx %in% c("ACTH(s)", "ACTH(DG)"), "pos", "neg"))
+pred <- as.factor(if_else(patma$CAM52Median > 4, "pos", "neg"))
+
+sensitivity(pred, truth, positive = "pos") %>% round(2)
+specificity(pred, truth, negative = "neg") %>% round(2)
+posPredValue(pred, truth, positive = "pos") %>% round(2)
+negPredValue(pred, truth, negative = "neg") %>% round(2)
+```
+

@@ -1,0 +1,52 @@
+---
+title: "managerialDx"
+author: "W. McDonald"
+date: "11/17/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Managerial Diagnoses
+
+## Import and clean step
+
+```{r}
+library(tidyverse)
+
+patma <- read_csv("data/TpitAddedVillaUpdate.csv")
+
+# Get rid of the Note column
+patma <- patma[-30]
+glimpse(patma)
+```
+
+## Too many classes
+
+Note the composition of finDx:
+
+```{r}
+patma %>% count(finDx, sort = TRUE)
+```
+
+This is 17 fine-grained diagnostic classes. Too many for a variety of reasons. A managerial group would greatly simplify the task of supervised and unsupervised statistical learning (machine learning) and reduce the likelihood of overfitting. 
+
+## Use mutate() and case_when to generate a new column: manDx
+
+```{r}
+x <- patma %>% mutate(manDx = case_when(
+  finDx == "GON" ~ "GON",
+  finDx %in% c("ACTH(s)", "ACTH(DG)") ~ "ACTH",
+  finDx %in% c("PRL", "PRL+") ~ "PRL",
+  finDx == "NULL" ~ "NULL",
+  finDx %in% c("PlurGH", "GH+(SG)", "GH(SG)", "GH+(DG)", "GH") ~ "GH",
+  finDx == "PLUR" ~ "PLUR",
+  finDx %in% c("GH/PRL", "PIT1(s)", "TSH(s)", "TSH+") ~ "PIT1",
+  TRUE ~ "UNK"
+))
+
+x %>% count(manDx, sort = TRUE)
+```
+
